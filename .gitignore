@@ -1,0 +1,8 @@
+node_modules
+dist
+out
+*.log
+
+# Electron app data (if symlinked / created here by tests)
+recordings.json
+audio/

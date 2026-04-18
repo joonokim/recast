@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<title>Recast — 녹음 분석 데스크탑 앱</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<style>
+  html, body {
+    margin: 0; padding: 0; width: 100%; height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+  }
+  body {
+    background: #F5F5F7;
+    transition: background 300ms ease;
+  }
+  body.dark-desktop {
+    background: #0A0A0C;
+  }
+  #root { width: 100%; height: 100%; }
+
+  /* ---- Desktop wallpaper gradients (behind the window) ---- */
+  .desk-bg {
+    position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none;
+  }
+  .desk-bg::before, .desk-bg::after {
+    content: ""; position: absolute; border-radius: 50%; filter: blur(120px);
+  }
+  .desk-bg::before {
+    width: 900px; height: 900px;
+    top: -200px; left: -200px;
+    background: radial-gradient(circle, #FFD7B8 0%, rgba(255,215,184,0) 70%);
+  }
+  .desk-bg::after {
+    width: 800px; height: 800px;
+    bottom: -300px; right: -200px;
+    background: radial-gradient(circle, #C7D2FF 0%, rgba(199,210,255,0) 70%);
+  }
+  body.dark-desktop .desk-bg::before {
+    background: radial-gradient(circle, #5B3A28 0%, rgba(91,58,40,0) 70%);
+    opacity: .5;
+  }
+  body.dark-desktop .desk-bg::after {
+    background: radial-gradient(circle, #242A55 0%, rgba(36,42,85,0) 70%);
+    opacity: .5;
+  }
+
+  /* waveform animation */
+  @keyframes waveshift {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-32px); }
+  }
+  .wave-anim {
+    animation: waveshift 1.6s linear infinite;
+  }
+
+  /* subtle pulse for recording dots */
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+  .pulse-dot { animation: pulse-dot 1.4s ease-in-out infinite; }
+
+  /* scrollbar - mac style */
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(0,0,0,.18); border-radius: 4px;
+  }
+  .dark ::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,.15);
+  }
+  ::-webkit-scrollbar-track { background: transparent; }
+
+  /* selection */
+  ::selection { background: rgba(10,132,255,.25); }
+
+  /* text-wrap-pretty everywhere */
+  p, h1, h2, h3, h4, li { text-wrap: pretty; }
+
+  /* cursor text */
+  @keyframes blink { 50% { opacity: 0; } }
+  .caret { animation: blink 1s steps(1) infinite; }
+</style>
+</head>
+<body>
+<div class="desk-bg" id="deskBg"></div>
+<div id="root"></div>
+
+<script>
+  // When running inside Electron (preload exposes window.recast), hide the
+  // fake desktop wallpaper and add a top drag-region strip so the window
+  // can be moved by clicking near the native traffic lights.
+  if (window.recast) {
+    const bg = document.getElementById("deskBg");
+    if (bg) bg.style.display = "none";
+    document.body.style.background = "transparent";
+
+    const dragStrip = document.createElement("div");
+    dragStrip.style.cssText = [
+      "position:fixed", "top:0", "left:0", "right:0", "height:28px",
+      "-webkit-app-region:drag", "z-index:50",
+    ].join(";");
+    document.body.appendChild(dragStrip);
+
+    // Block default "open file in browser" behavior for drops that miss our handlers.
+    window.addEventListener("dragover", (e) => e.preventDefault());
+    window.addEventListener("drop", (e) => e.preventDefault());
+  }
+</script>
+
+<script type="text/babel" src="src/tokens.jsx"></script>
+<script type="text/babel" src="src/icons.jsx"></script>
+<script type="text/babel" src="src/data.jsx"></script>
+<script type="text/babel" src="src/window-chrome.jsx"></script>
+<script type="text/babel" src="src/screens/library.jsx"></script>
+<script type="text/babel" src="src/screens/detail.jsx"></script>
+<script type="text/babel" src="src/screens/analyzing.jsx"></script>
+<script type="text/babel" src="src/screens/transcript.jsx"></script>
+<script type="text/babel" src="src/screens/search.jsx"></script>
+<script type="text/babel" src="src/layouts/sidebar-layout.jsx"></script>
+<script type="text/babel" src="src/layouts/tabs-layout.jsx"></script>
+<script type="text/babel" src="src/layouts/columns-layout.jsx"></script>
+<script type="text/babel" src="src/layouts/focus-layout.jsx"></script>
+<script type="text/babel" src="src/tweaks.jsx"></script>
+<script type="text/babel" src="src/bridge.jsx"></script>
+<script type="text/babel" src="src/library-store.jsx"></script>
+<script type="text/babel" src="src/analyzing-overlay.jsx"></script>
+<script type="text/babel" src="src/app.jsx"></script>
+</body>
+</html>
